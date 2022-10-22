@@ -20,6 +20,7 @@ class MedicineController extends Controller
      */
     public function index(Request $request)
     {
+        // mengirimkan request ajax berupa json dan diolah oleh ajax di view medicine index
         if ($request->ajax()) {
             $medicines = Medicine::with('user')->get();
             return DataTables::of($medicines)
@@ -52,6 +53,7 @@ class MedicineController extends Controller
                     return $btn;
                 })
                 ->editColumn('expiry_date', function ($data) {
+                    // mengubah format tanggal Y-m-d ke d F Y dan juga ditranslate
                     $formatedDate = Carbon::createFromFormat('Y-m-d', $data->expiry_date)->translatedFormat('d F Y');
                     return $formatedDate;
                 })
@@ -79,6 +81,7 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
+        // validasi
         $validator = Validator::make(
             $request->all(),
             [
@@ -95,9 +98,12 @@ class MedicineController extends Controller
                 'medicine_expiry.date' => 'Tanggal kedaluwarsa harus berupa tanggal',
             ]
         );
+        // jika validasi false maka kembali ke halaman dengan mengirimkan data lamanya/old data
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator->errors())->withInput();
-        } else {
+        }
+        // jika validasi benar maka akan mengambil data dari view dan menyimpan ke database
+        else {
             $data = [
                 'medicine_name' => $request->medicine_name,
                 'medicine_made' => $request->medicine_made,
@@ -105,8 +111,9 @@ class MedicineController extends Controller
                     ->format('Y-m-d'),
                 'created_by' => Auth::user()->id
             ];
+            // menyimpan ke database
             Medicine::create($data);
-
+            // kembali ke halaman index medicine
             return redirect()->route('medicine.index')->withSuccess('Data Obat berhasil diinput!');
         }
     }
@@ -119,6 +126,7 @@ class MedicineController extends Controller
      */
     public function show(Request $request, $id)
     {
+        // mengambil data obat berdasarkan id dan memparsing datanya ke dalam view
         $medicine = Medicine::with(['user'])->findOrFail($id);
         return view('pages.medicine.view', compact('medicine'));
     }
@@ -131,6 +139,7 @@ class MedicineController extends Controller
      */
     public function edit($id)
     {
+        // mengambil data obat berdasarkan id dan memparsing datanya ke dalam view
         $medicine = Medicine::with(['user'])->findOrFail($id);
         return view('pages.medicine.edit', compact('medicine'));
     }
@@ -144,6 +153,7 @@ class MedicineController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // validasi data
         $validator = Validator::make(
             $request->all(),
             [
@@ -163,6 +173,7 @@ class MedicineController extends Controller
                     ->format('Y-m-d'),
                 'created_by' => Auth::user()->id
             ];
+            // melakukan update data setelah validasi benar
             $medicine->update($data);
 
             return redirect()->route('medicine.index')->with(['success' => 'Data Obat berhasil diubah!']);
@@ -178,6 +189,7 @@ class MedicineController extends Controller
     public function destroy($id)
     {
         $medicine = Medicine::findOrFail($id);
+        // menghapus data obat namun menggunakan soft delete sehingga data obat masih bisa direstore
         $medicine->delete();
 
         if ($medicine->delete())

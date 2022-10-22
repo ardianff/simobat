@@ -17,6 +17,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        // mengirimkan request ajax ke view user index
         if ($request->ajax()) {
             $users = User::all();
             return DataTables::of($users)

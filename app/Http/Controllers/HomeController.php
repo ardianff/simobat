@@ -25,6 +25,7 @@ class HomeController extends Controller
      */
     public function index()
     {
+        // mengirimkan jumlah users dan obat ke view home
         $users = User::count();
         $medicine = Medicine::count();
         return view('pages.home.index', [

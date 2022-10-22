@@ -1,7 +1,5 @@
 <?php
-
-
-
+// fungsi tambahan
 function salam()
 {
     //ubah timezone menjadi jakarta
