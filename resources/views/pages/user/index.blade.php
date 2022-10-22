@@ -7,21 +7,16 @@
 @section('content')
     <div class="body flex-grow-1 px-3">
         <div class="container-lg">
-            <div class="fs-2 fw-semibold">Daftar Obat</div>
+            <div class="fs-2 fw-semibold">Data Users</div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-4">
                     <li class="breadcrumb-item">
-                        <a href="{{ url('/') }}" class="text-decoration-none">Home</a>
+                        <a href="{{ url('/') }}"class="text-decoration-none">Home</a>
                     </li>
-                    <li class="breadcrumb-item active"><span>Obat</span></li>
+                    <li class="breadcrumb-item active"><span>Users</span></li>
                 </ol>
             </nav>
             <div class="card mb-4">
-                <div class="card-header">
-                    <a class="badge bg-danger text-decoration-none text-light ms-2"
-                        href="{{ route('medicine.create') }}">Tambah Data
-                        Obat</a>
-                </div>
                 <div class="card-body">
                     <div class="example">
                         <div class="tab-content rounded-bottom">
@@ -30,11 +25,10 @@
                                     <thead>
                                         <tr>
                                             <th>No</th>
-                                            <th>Nama Obat</th>
-                                            <th>Dibuat Oleh</th>
-                                            <th>Tanggal Kedaluwarsa</th>
-                                            <th>Last Modified By</th>
-                                            <th>Aksi</th>
+                                            <th>Nama Lengkap</th>
+                                            <th>Alamat Email</th>
+                                            <th>Dibuat Pada</th>
+                                            <th>Diubah Pada</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -59,6 +53,8 @@
                 processing: true,
                 serverSide: true,
                 stateSave: true,
+                orderable: true,
+                searchable: true,
                 ajax: "{{ url()->current() }}",
                 columns: [{
                         render: function(data, type, row, meta) {
@@ -66,24 +62,18 @@
                         },
                     },
                     {
-                        data: 'medicine_name',
+                        data: 'name',
                     },
                     {
-                        data: 'medicine_made',
+                        data: 'email',
                     },
                     {
-                        data: 'expiry_date'
+                        data: 'created_at',
                     },
                     {
-                        data: 'user.name'
+                        data: 'updated_at'
                     },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: true,
-                        searchable: true,
-                    },
-                ]
+                ],
             });
 
         });

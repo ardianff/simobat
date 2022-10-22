@@ -2,7 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\Medicine;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables as DataTablesDataTables;
 
 class MedicineController extends Controller
 {
@@ -11,8 +18,46 @@ class MedicineController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->ajax()) {
+            $medicines = Medicine::with('user')->get();
+            return DataTables::of($medicines)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    $btn = '<table><tbody><tr class="text-center">';
+                    $btn = $btn . '<td class="text-center">
+                            <form action="' . route('medicine.show', $row->id) . '" method="post" class="d-inline" title="Lihat Data Obat '  . $row->medicine_name . '">
+                            ' . method_field('GET') . '
+                            ' . csrf_field() . '
+                            <button class="btn btn-info btn-sm me-2"><i class="fa-regular fa-eye"></i></button>
+                            </form>
+                            </td>';
+                    $btn = $btn . '<td class="text-center">
+                            <form action="' . route('medicine.edit', $row->id) . '" method="post" class="d-inline" title="Edit Data Obat '  . $row->medicine_name . '">
+                            ' . method_field('GET') . '
+                            ' . csrf_field() . '
+                            <button class="btn btn-warning btn-sm me-2"><i class="fa-regular fa-pencil"></i></button>
+                            </form>
+                            </td>';
+                    $btn = $btn . '<td class="text-center">
+                            <form action="' . route('medicine.destroy', $row->id) . '" method="post" class="d-inline" title="Hapus Data Obat '  . $row->medicine_name . '">
+                            ' . method_field('Delete') . '
+                            ' . csrf_field() . '
+                            <button class="btn btn-danger btn-sm me-2"><i class="fa-regular fa-trash"></i></button>
+                            </form>
+                            </td>';
+
+                    $btn = $btn . '</tr></tbody></table>';
+                    return $btn;
+                })
+                ->editColumn('expiry_date', function ($data) {
+                    $formatedDate = Carbon::createFromFormat('Y-m-d', $data->expiry_date)->translatedFormat('d F Y');
+                    return $formatedDate;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
         return view('pages.medicine.index');
     }
 
@@ -23,7 +68,7 @@ class MedicineController extends Controller
      */
     public function create()
     {
-        //
+        return view('pages.medicine.create');
     }
 
     /**
@@ -34,7 +79,36 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'medicine_name' => 'required|min:5',
+                'medicine_made' => 'required|min:5',
+                'medicine_expiry' => 'required|date'
+            ],
+            [
+                'medicine_name.required' => 'Nama obat tidak boleh kosong',
+                'medicine_name.min' => 'Nama obat berisi minimal 5 karakter',
+                'medicine_made.required' => 'Form dibuat tidak boleh kosong',
+                'medicine_name.min' => 'Form dibuat berisi minimal 5 karakter',
+                'medicine_expiry.required' => 'Tanggal kedaluwarsa tidak boleh kosong',
+                'medicine_expiry.date' => 'Tanggal kedaluwarsa harus berupa tanggal',
+            ]
+        );
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator->errors())->withInput();
+        } else {
+            $data = [
+                'medicine_name' => $request->medicine_name,
+                'medicine_made' => $request->medicine_made,
+                'expiry_date' => Carbon::createFromFormat('d-m-Y', $request->medicine_expiry)
+                    ->format('Y-m-d'),
+                'created_by' => Auth::user()->id
+            ];
+            Medicine::create($data);
+
+            return redirect()->route('medicine.index')->withSuccess('Data Obat berhasil diinput!');
+        }
     }
 
     /**
@@ -43,9 +117,10 @@ class MedicineController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        //
+        $medicine = Medicine::with(['user'])->findOrFail($id);
+        return view('pages.medicine.view', compact('medicine'));
     }
 
     /**
@@ -56,7 +131,8 @@ class MedicineController extends Controller
      */
     public function edit($id)
     {
-        //
+        $medicine = Medicine::with(['user'])->findOrFail($id);
+        return view('pages.medicine.edit', compact('medicine'));
     }
 
     /**
@@ -68,7 +144,29 @@ class MedicineController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'medicine_name' => 'required|min:5',
+                'medicine_made' => 'required|min:5',
+                'medicine_expiry' => 'required|date'
+            ]
+        );
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator->errors())->withInput();
+        } else {
+            $medicine = Medicine::with(['user'])->findOrFail($id);
+            $data = [
+                'medicine_name' => $request->medicine_name,
+                'medicine_made' => $request->medicine_made,
+                'expiry_date' => Carbon::createFromFormat('d-m-Y', $request->medicine_expiry)
+                    ->format('Y-m-d'),
+                'created_by' => Auth::user()->id
+            ];
+            $medicine->update($data);
+
+            return redirect()->route('medicine.index')->with(['success' => 'Data Obat berhasil diubah!']);
+        }
     }
 
     /**
@@ -79,6 +177,13 @@ class MedicineController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $medicine = Medicine::findOrFail($id);
+        $medicine->delete();
+
+        if ($medicine->delete())
+            return redirect()->route('medicine.index')->with(['success' => 'Data Obat berhasil dihapus!']);
+        else {
+            return redirect()->route('medicine.index')->with(['error' => 'Data Obat gagal dihapus!']);
+        }
     }
 }

@@ -13,6 +13,7 @@
         @yield('content')
         @include('includes.footer')
     </div>
+    @include('sweetalert::alert')
     @include('includes.scripts')
     @stack('addon-scripts')
 </body>

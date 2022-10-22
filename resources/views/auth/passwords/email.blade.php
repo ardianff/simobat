@@ -25,8 +25,8 @@
                                         </svg></span>
                                     <input id="email" type="email"
                                         class="form-control @error('email') is-invalid @enderror" name="email"
-                                        value="{{ old('email') }}" required autocomplete="email"
-                                        placeholder="Alamat Email">
+                                        value="{{ empty(Auth::user()->email) ? old('email') : Auth::user()->email }}"
+                                        required autocomplete="email" placeholder="Alamat Email">
                                     @error('email')
                                         <div class="alert alert-danger invalid-feedback rounded mt-2" role="alert">
                                             <strong>{{ $message }}</strong>

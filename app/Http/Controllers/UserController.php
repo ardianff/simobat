@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
@@ -11,9 +15,21 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if ($request->ajax()) {
+            $users = User::all();
+            return DataTables::of($users)
+                ->editColumn('created_at', function ($data) {
+                    $formatedDate = Carbon::createFromFormat('Y-m-d H:i:s', $data->created_at)->translatedFormat('d F Y H:i:s');
+                    return $formatedDate;
+                })->editColumn('updated_at', function ($data) {
+                    $formatedDate = Carbon::createFromFormat('Y-m-d H:i:s', $data->updated_at)->translatedFormat('d F Y H:i:s');
+                    return $formatedDate;
+                })
+                ->make(true);
+        }
+        return view('pages.user.index');
     }
 
     /**
